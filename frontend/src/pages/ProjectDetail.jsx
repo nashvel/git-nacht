@@ -3,32 +3,27 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   ArrowLeftIcon,
-  FolderIcon,
-  CameraIcon,
-  CodeBracketIcon,
-  ChartBarIcon,
-  EyeIcon,
-  StarIcon,
-  ClockIcon,
-  DocumentTextIcon,
-  PlayIcon,
-  PauseIcon,
-  CalendarDaysIcon,
-  UserGroupIcon,
   LinkIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
-  ChatBubbleLeftIcon,
-  ShareIcon,
+  StarIcon,
+  EyeIcon,
+  UsersIcon,
+  CodeBracketIcon,
+  CameraIcon,
+  ChartBarIcon,
+  UserGroupIcon,
   HeartIcon,
-  PaperAirplaneIcon
+  ShareIcon,
+  ChatBubbleLeftIcon,
+  PaperAirplaneIcon,
+  DocumentTextIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline';
 
 const ProjectDetail = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const [project, setProject] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('recent-changes');
   const [commits, setCommits] = useState([]);
   const [screenshots, setScreenshots] = useState([]);
@@ -41,6 +36,7 @@ const ProjectDetail = () => {
       if (!projectId) return;
 
       try {
+        setLoading(true);
         // Load project data from API
         const api = (await import('../services/api')).default;
         const projectData = await api.getProject(projectId);
@@ -55,22 +51,40 @@ const ProjectDetail = () => {
             
             if (commitsResponse.ok) {
               const commitsData = await commitsResponse.json();
-              setCommits(commitsData || []);
+              
+              // Ensure commitsData is an array before processing
+              const commitsArray = Array.isArray(commitsData) ? commitsData : [];
+              setCommits(commitsArray);
               
               // Convert commits to recent changes format
-              const recentChangesData = (commitsData || []).map(commit => ({
-                id: commit.sha || Date.now() + Math.random(),
-                title: commit.message || 'No commit message',
-                description: commit.message || 'No description available',
-                author: commit.author?.name || 'Unknown',
-                date: commit.date || new Date().toISOString(),
-                status: 'success',
-                device: 'desktop',
-                screenshot: null,
-                likes: 0,
-                comments: [],
-                tags: [] // Add empty tags array to prevent map error
-              }));
+              const recentChangesData = commitsArray.map(commit => {
+                // Extract repository path from project repository URL
+                const repoPath = projectData.repository.replace('https://github.com/', '');
+                
+                // Handle different possible commit data structures
+                const commitHash = commit.hash || commit.short_hash || commit.sha || commit.id;
+                const commitMessage = commit.message || 'No commit message';
+                const authorName = commit.author_name || commit.author?.name || 'Unknown';
+                const commitDate = commit.date || commit.commit_date || new Date().toISOString();
+                
+                const commitUrl = commitHash ? `https://github.com/${repoPath}/commit/${commitHash}` : '#';
+                
+                return {
+                  id: commitHash || Date.now() + Math.random(),
+                  title: commitMessage,
+                  description: commitMessage,
+                  author: authorName,
+                  date: commitDate,
+                  status: 'success',
+                  device: 'desktop',
+                  screenshot: null,
+                  likes: 0,
+                  comments: [],
+                  tags: [],
+                  commitHash: commitHash?.substring(0, 7) || 'unknown',
+                  commitUrl: commitUrl // Add GitHub commit URL
+                };
+              });
               setRecentChanges(recentChangesData);
             } else {
               console.warn('Failed to load commits:', commitsResponse.status);
@@ -89,6 +103,8 @@ const ProjectDetail = () => {
         if (error.message && error.message.includes('404')) {
           navigate('/dashboard/projects');
         }
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -146,10 +162,13 @@ const ProjectDetail = () => {
     setNewComment('');
   };
 
-  const handleCopyShareUrl = (shareUrl) => {
+  const handleCopyShareUrl = (changeId) => {
+    // Generate shareable URL for the specific change
+    const baseUrl = window.location.origin;
+    const shareUrl = `${baseUrl}/share/${projectId}/${changeId}`;
+    
     navigator.clipboard.writeText(shareUrl);
-    // You could add a toast notification here
-    alert('Share URL copied to clipboard!');
+    alert('Share URL copied to clipboard! Anyone can view this change without signing in.');
   };
 
   const handleLikeChange = (changeId) => {
@@ -160,8 +179,70 @@ const ProjectDetail = () => {
     ));
   };
 
-  if (!project) {
-    return <div className="p-8">Loading...</div>;
+  // Skeleton components for ProjectDetail
+  const ProjectDetailSkeleton = () => (
+    <div className="p-8 bg-gray-50 min-h-screen">
+      {/* Header Skeleton */}
+      <div className="mb-8">
+        <div className="h-4 bg-gray-200 rounded w-32 mb-4 animate-pulse"></div>
+        
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-gray-200 rounded-2xl animate-pulse"></div>
+            <div>
+              <div className="h-8 bg-gray-200 rounded w-48 mb-2 animate-pulse"></div>
+              <div className="h-4 bg-gray-200 rounded w-64 mb-2 animate-pulse"></div>
+              <div className="flex items-center gap-4">
+                <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="h-10 bg-gray-200 rounded-lg w-24 animate-pulse"></div>
+            <div className="h-10 bg-gray-200 rounded-lg w-20 animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs Skeleton */}
+      <div className="mb-8">
+        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+          <div className="h-10 bg-gray-200 rounded-lg w-32 animate-pulse"></div>
+          <div className="h-10 bg-gray-200 rounded-lg w-24 animate-pulse"></div>
+          <div className="h-10 bg-gray-200 rounded-lg w-28 animate-pulse"></div>
+          <div className="h-10 bg-gray-200 rounded-lg w-24 animate-pulse"></div>
+        </div>
+      </div>
+
+      {/* Content Skeleton */}
+      <div className="space-y-6">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-pulse">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                <div>
+                  <div className="h-5 bg-gray-200 rounded w-40 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-32"></div>
+                </div>
+              </div>
+            </div>
+            <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+            <div className="flex items-center gap-4">
+              <div className="h-8 bg-gray-200 rounded-lg w-16"></div>
+              <div className="h-8 bg-gray-200 rounded-lg w-20"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  if (loading || !project) {
+    return <ProjectDetailSkeleton />;
   }
 
   return (
@@ -179,7 +260,7 @@ const ProjectDetail = () => {
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <FolderIcon className="w-8 h-8 text-white" />
+              <CodeBracketIcon className="w-8 h-8 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-3 mb-2">
@@ -293,10 +374,22 @@ const ProjectDetail = () => {
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h4 className="text-xl font-bold text-gray-900">{change.title}</h4>
-                          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">
+                          <a 
+                            href={change.commitUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer"
+                          >
+                            {change.title}
+                          </a>
+                          <a
+                            href={change.commitUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium hover:bg-blue-200 transition-colors cursor-pointer"
+                          >
                             {change.commitHash}
-                          </span>
+                          </a>
                         </div>
                         <p className="text-gray-600 mb-3 leading-relaxed">{change.description}</p>
                         <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
@@ -338,7 +431,7 @@ const ProjectDetail = () => {
                           <span className="text-sm font-medium">{change.likes}</span>
                         </button>
                         <button 
-                          onClick={() => handleCopyShareUrl(change.shareUrl)}
+                          onClick={() => handleCopyShareUrl(change.commitHash)}
                           className="flex items-center gap-2 px-3 py-2 bg-white rounded-xl hover:bg-gray-50 transition-colors border border-gray-200"
                         >
                           <ShareIcon className="w-4 h-4 text-blue-500" />
@@ -346,7 +439,7 @@ const ProjectDetail = () => {
                         </button>
                       </div>
                       <div className="text-sm text-gray-500">
-                        Share URL: <code className="bg-white px-2 py-1 rounded text-xs">{change.shareUrl}</code>
+                        <span className="font-medium">Share this change:</span> <code className="bg-white px-2 py-1 rounded text-xs ml-1">{window.location.origin}/share/{projectId}/{change.commitHash}</code>
                       </div>
                     </div>
 

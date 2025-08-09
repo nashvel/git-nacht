@@ -14,6 +14,8 @@ import ScreenshotViewer from './pages/ScreenshotViewer.jsx';
 import CommitHistory from './pages/CommitHistory.jsx';
 import Profile from './pages/Profile.jsx';
 import Settings from './pages/Settings.jsx';
+import SharedChange from './pages/SharedChange.jsx';
+import NotFound from './pages/NotFound.jsx';
 
 // Placeholder component for pages to be created
 const Placeholder = ({ title }) => (
@@ -32,6 +34,8 @@ function App() {
         <Route path="signin" element={<SignIn />} />
         <Route path="signup" element={<SignUp />} />
       </Route>
+      {/* Public shared change route */}
+      <Route path="/share/:projectId/:changeId" element={<SharedChange />} />
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<ProjectsDashboard />} />
@@ -43,6 +47,8 @@ function App() {
           <Route path="settings" element={<Settings />} />
         </Route>
       </Route>
+      {/* 404 catch-all route */}
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }

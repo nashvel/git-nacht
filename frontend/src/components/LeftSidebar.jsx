@@ -2,21 +2,21 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
-  FolderIcon,
-  CameraIcon,
-  CodeBracketIcon,
-  UserIcon,
-  CogIcon,
-  EllipsisHorizontalIcon,
-  ChartBarIcon,
-  BellIcon,
-  MagnifyingGlassIcon,
   HomeIcon,
-  DocumentTextIcon,
-  CloudIcon,
+  CodeBracketIcon,
+  PhotoIcon,
+  ChartBarIcon,
+  UserIcon,
+  Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
-  DevicePhoneMobileIcon,
-} from '@heroicons/react/24/solid';
+  Bars3Icon,
+  XMarkIcon,
+  CameraIcon,
+  DocumentTextIcon,
+  CogIcon,
+  MagnifyingGlassIcon,
+  EllipsisHorizontalIcon
+} from '@heroicons/react/24/outline';
 
 
 const LeftSidebar = () => {
@@ -28,7 +28,7 @@ const LeftSidebar = () => {
 
   const navItems = [
     { name: 'Dashboard', icon: HomeIcon, path: '/dashboard' },
-    { name: 'Projects', icon: FolderIcon, path: '/dashboard/projects' },
+    { name: 'Projects', icon: CodeBracketIcon, path: '/dashboard/projects' },
     { name: 'Screenshots', icon: CameraIcon, path: '/dashboard/screenshots' },
     { name: 'Commits', icon: CodeBracketIcon, path: '/dashboard/commits' },
     { name: 'Analytics', icon: ChartBarIcon, path: '/dashboard/analytics' },

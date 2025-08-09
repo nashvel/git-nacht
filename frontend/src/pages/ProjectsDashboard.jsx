@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   PlusIcon, 
-  FolderIcon, 
+  CodeBracketIcon, 
   PhotoIcon, 
-  CodeBracketIcon,
   ChartBarIcon,
   StarIcon,
   EyeIcon,
@@ -23,17 +22,21 @@ const ProjectsDashboard = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newProject, setNewProject] = useState({ name: '', description: '', repository: '' });
   const [loading, setLoading] = useState(false);
+  const [projectsLoading, setProjectsLoading] = useState(true);
   const [error, setError] = useState('');
 
   // Load projects from API
   useEffect(() => {
     const loadProjects = async () => {
       try {
+        setProjectsLoading(true);
         const projectsData = await api.getProjects();
         setProjects(projectsData || []);
       } catch (error) {
         console.error('Failed to load projects:', error);
         setProjects([]);
+      } finally {
+        setProjectsLoading(false);
       }
     };
     
@@ -116,6 +119,51 @@ const ProjectsDashboard = () => {
     avgCoverage: projects.length > 0 ? Math.round(projects.reduce((sum, p) => sum + (p?.coverage || 0), 0) / projects.length) : 0
   };
 
+  // Skeleton components
+  const ProjectCardSkeleton = () => (
+    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-pulse">
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gray-200 rounded-xl"></div>
+          <div>
+            <div className="h-5 bg-gray-200 rounded w-32 mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded w-24"></div>
+          </div>
+        </div>
+        <div className="w-6 h-6 bg-gray-200 rounded"></div>
+      </div>
+      
+      <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+      <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+      
+      <div className="flex items-center gap-4 mb-4">
+        <div className="h-4 bg-gray-200 rounded w-16"></div>
+        <div className="h-4 bg-gray-200 rounded w-20"></div>
+        <div className="h-4 bg-gray-200 rounded w-14"></div>
+      </div>
+      
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="h-4 bg-gray-200 rounded w-12"></div>
+          <div className="h-4 bg-gray-200 rounded w-16"></div>
+          <div className="h-4 bg-gray-200 rounded w-14"></div>
+        </div>
+        <div className="h-8 bg-gray-200 rounded-lg w-20"></div>
+      </div>
+    </div>
+  );
+
+  const StatCardSkeleton = () => (
+    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-pulse">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="w-8 h-8 bg-gray-200 rounded-lg"></div>
+        <div className="h-4 bg-gray-200 rounded w-20"></div>
+      </div>
+      <div className="h-8 bg-gray-200 rounded w-16 mb-1"></div>
+      <div className="h-3 bg-gray-200 rounded w-24"></div>
+    </div>
+  );
+
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
       {/* Header */}
@@ -135,55 +183,76 @@ const ProjectsDashboard = () => {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Projects</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{totalStats.totalProjects}</p>
+        {projectsLoading ? (
+          // Skeleton loading for stats
+          <>
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </>
+        ) : (
+          <>
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Projects</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-1">{totalStats.totalProjects}</p>
+                </div>
+                <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center">
+                  <CodeBracketIcon className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center">
-              <FolderIcon className="w-6 h-6 text-blue-600" />
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Screenshots</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-1">{totalStats.totalScreenshots}</p>
+                </div>
+                <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center">
+                  <CameraIcon className="w-6 h-6 text-green-600" />
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Screenshots</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{totalStats.totalScreenshots}</p>
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Commits</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-1">{totalStats.totalCommits}</p>
+                </div>
+                <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center">
+                  <CodeBracketIcon className="w-6 h-6 text-purple-600" />
+                </div>
+              </div>
             </div>
-            <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center">
-              <CameraIcon className="w-6 h-6 text-green-600" />
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Avg Coverage</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-1">{totalStats.avgCoverage}%</p>
+                </div>
+                <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center">
+                  <ChartBarIcon className="w-6 h-6 text-orange-600" />
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Commits</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{totalStats.totalCommits}</p>
-            </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center">
-              <CodeBracketIcon className="w-6 h-6 text-purple-600" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Avg Coverage</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{totalStats.avgCoverage}%</p>
-            </div>
-            <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center">
-              <ChartBarIcon className="w-6 h-6 text-orange-600" />
-            </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
 
       {/* Projects Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {projects.filter(project => project && project.id).map((project, index) => (
+        {projectsLoading ? (
+          // Skeleton loading for projects
+          <>
+            <ProjectCardSkeleton />
+            <ProjectCardSkeleton />
+            <ProjectCardSkeleton />
+            <ProjectCardSkeleton />
+          </>
+        ) : (
+          projects.filter(project => project && project.id).map((project, index) => (
           <Link key={project.id} to={`/dashboard/projects/${project.id}`}>
             <motion.div
               className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all duration-200 cursor-pointer group"
@@ -196,7 +265,7 @@ const ProjectsDashboard = () => {
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-md">
-                  <FolderIcon className="w-6 h-6 text-white" />
+                  <CodeBracketIcon className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
@@ -277,7 +346,8 @@ const ProjectsDashboard = () => {
             </div>
             </motion.div>
           </Link>
-        ))}
+          ))
+        )}
       </div>
 
       {/* Create Project Modal */}
