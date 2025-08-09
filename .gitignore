@@ -1,0 +1,75 @@
+# Environment variables (NEVER commit these!)
+.env
+
+# Database and sensitive data
+*.db
+*.sqlite
+*.sqlite3
+
+# Screenshots (user-generated content)
+screenshots/
+images/
+captures/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Chrome driver
+chromedriver*
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# User-specific configuration
+config.json
+settings.json
+
+# Test files
+test_screenshots/
+test_data/
