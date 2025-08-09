@@ -18,6 +18,56 @@ class GitNachtCLI:
     def __init__(self):
         self.db = Database()
         self.project_root = os.path.join(os.path.dirname(__file__), '..', '..')
+        self.user_id = None
+        
+    def authenticate(self):
+        """Authenticate user with interactive login"""
+        if not self.db.connect():
+            print("❌ Could not connect to database")
+            return False
+        
+        import getpass
+        
+        print("🔐 Git Nacht CLI Login")
+        email = input("Email: ")
+        password = getpass.getpass("Password: ")
+        
+        self.user_id = self.db.authenticate_user(email, password)
+        return self.user_id is not None
+    
+    def has_recent_commit(self):
+        """Check if there's a recent commit (within last 5 minutes)"""
+        try:
+            import subprocess
+            from datetime import datetime, timedelta
+            
+            # Get the timestamp of the last commit
+            result = subprocess.run(
+                ['git', 'log', '-1', '--format=%ct'], 
+                capture_output=True, 
+                text=True,
+                cwd=self.project_root
+            )
+            
+            if result.returncode == 0:
+                commit_timestamp = int(result.stdout.strip())
+                commit_time = datetime.fromtimestamp(commit_timestamp)
+                current_time = datetime.now()
+                
+                # Check if commit is within last 5 minutes
+                time_diff = current_time - commit_time
+                if time_diff <= timedelta(minutes=5):
+                    return True
+                else:
+                    print(f"⚠️  Last commit was {time_diff} ago. Please make a fresh commit.")
+                    return False
+            else:
+                print("❌ No git commits found in this repository.")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Failed to check commit history: {e}")
+            return False
         
     def take_screenshot(self, url):
         """Take screenshot using Selenium and save to PHP backend path"""
@@ -63,14 +113,15 @@ class GitNachtCLI:
                 print(f"✅ Screenshot saved: {filename}")
                 
                 # Save to database
-                project_id = self.db.get_current_project_id()
+                project_id = self.db.get_current_project_id(self.user_id)
                 relative_path = f"uploads/screenshots/{filename}"  # Path relative to backend
                 
                 screenshot_id = self.db.save_screenshot(
                     project_id=project_id,
                     commit_hash=commit_hash,
                     url=url,
-                    screenshot_path=relative_path
+                    screenshot_path=relative_path,
+                    user_id=self.user_id or 1
                 )
                 
                 if screenshot_id:
@@ -95,9 +146,10 @@ class GitNachtCLI:
         """Handle the nacht command to take screenshots"""
         print(f"🚀 Git Nacht CLI - Taking screenshot of {url}")
         
-        # Connect to database
-        if not self.db.connect():
-            print("❌ Could not connect to database")
+        # Authenticate user
+        print("🔐 Authenticating...")
+        if not self.authenticate():
+            print("❌ Authentication failed")
             return False
         
         # Ensure screenshots table exists

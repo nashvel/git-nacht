@@ -21,13 +21,38 @@ def main():
         print("Examples:")
         print("  python git-nacht.py add .")
         print("  python git-nacht.py commit -m 'message'")
-        print("  python git-nacht.py nacht -url 'localhost:5173/dashboard'")
+        print("  python git-nacht.py shot localhost:5173/dashboard")
+        print("  python git-nacht.py shot localhost:5173/features")
         sys.exit(1)
 
     command = ' '.join(sys.argv[1:])
     cli = GitNachtCLI()
 
-    # Handle nacht command
+    # Handle shot command (shortened from nacht -url)
+    if command.startswith('shot'):
+        # Check if there's a recent commit first
+        if not cli.has_recent_commit():
+            print("❌ No recent commit found. Please run 'git commit' first.")
+            print("💡 Workflow: git add . → git commit -m 'message' → python git-nacht.py shot <url>")
+            return
+            
+        # Extract URL from command
+        parts = command.split()
+        if len(parts) < 2:
+            print("❌ Invalid shot command. Use: shot <url>")
+            print("Examples:")
+            print("  python git-nacht.py shot localhost:5173/dashboard")
+            print("  python git-nacht.py shot localhost:5173/features")
+            return
+            
+        url = parts[1]
+        if not url.startswith(('http://', 'https://')):
+            url = f"http://{url}"
+        
+        cli.handle_nacht_command(url)
+        return
+
+    # Handle legacy nacht command for backwards compatibility
     if command.startswith('nacht'):
         url_match = re.search(r'-url\s+["\']?([^"\']+)["\']?', command)
         if url_match:
@@ -35,11 +60,12 @@ def main():
             if not url.startswith(('http://', 'https://')):
                 url = f"http://{url}"
             
-            # Setup database connection
-            if cli.db.connect():
-                cli.handle_nacht_command(url)
-            else:
-                print("❌ Could not connect to database. Run setup first.")
+            # Check for recent commit
+            if not cli.has_recent_commit():
+                print("❌ No recent commit found. Please run 'git commit' first.")
+                return
+            
+            cli.handle_nacht_command(url)
         else:
             print("❌ Invalid nacht command. Use: nacht -url 'localhost:5173/dashboard'")
         return
